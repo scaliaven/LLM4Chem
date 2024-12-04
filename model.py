@@ -41,7 +41,7 @@ def load_tokenizer_and_model(model_name, base_model=None, device=None):
             
         model = PeftModelForCausalLM.from_pretrained(
             model,
-            model_name,
+            "/gpfsnyu/scratch/hh3043/.cache/huggingface/hub/models--osunlp--LlaSMol-Mistral-7B/snapshots/044d6124448733615c5a3d6ab14b947f71fc6728",
             torch_dtype=torch.bfloat16,
         )
     else:

@@ -3,7 +3,7 @@ import json
 from tqdm.auto import tqdm
 
 import fire
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 
 from config import TASKS_GENERATION_SETTINGS, TASKS, DEFAULT_MAX_INPUT_TOKENS, DEFAULT_MAX_NEW_TOKENS
 from generation import LlaSMolGeneration
@@ -47,7 +47,7 @@ def generate(
         max_new_tokens = DEFAULT_MAX_NEW_TOKENS
 
     # Load dataset
-    data = load_dataset(data_path, split=split, tasks=(task,))
+    data = load_dataset("/gpfsnyu/scratch/hh3043/.cache/huggingface/hub/datasets--osunlp--SMolInstruct/snapshots/b3e028007c6abc043f62ed0aef4824dc9e86bacc/SMolInstruct.py", split=split, tasks=(task,))
     data = list(data)
 
     # Create output directory
@@ -94,7 +94,7 @@ def generate(
                 return
             
             batch_samples = data[k: e]
-            
+            # print(batch_samples)
             batch_outputs = generator.generate(batch_input, batch_size=batch_size, max_input_tokens=max_input_tokens, max_new_tokens=max_new_tokens, canonicalize_smiles=False, print_out=False, **generation_kargs)
 
             assert len(batch_input) == len(batch_outputs)
