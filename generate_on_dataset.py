@@ -3,17 +3,19 @@ import json
 from tqdm.auto import tqdm
 
 import fire
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset
 
 from config import TASKS_GENERATION_SETTINGS, TASKS, DEFAULT_MAX_INPUT_TOKENS, DEFAULT_MAX_NEW_TOKENS
 from generation import LlaSMolGeneration
+import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
 def generate(
     generator: LlaSMolGeneration,
     # Data
     data_path: str = "osunlp/SMolInstruct",
-    split: str = 'test',
+    split: str = 'train',
     task: str = '',
     # Output
     output_file: str = '',
@@ -22,6 +24,7 @@ def generate(
     max_input_tokens: int = None,
     max_new_tokens: int = None,
     print_out=False,
+    buffer_size: int = 5,
     **generation_kargs,
 ):
     # Setting default params for certain tasks
@@ -48,6 +51,7 @@ def generate(
 
     # Load dataset
     data = load_dataset("/gpfsnyu/scratch/hh3043/.cache/huggingface/hub/datasets--osunlp--SMolInstruct/snapshots/b3e028007c6abc043f62ed0aef4824dc9e86bacc/SMolInstruct.py", split=split, tasks=(task,))
+    data = data.select(range(50000))
     data = list(data)
 
     # Create output directory
@@ -75,6 +79,7 @@ def generate(
     if num_exist_lines > 0:
         print('Continue with the existing %d' % num_exist_lines)
 
+    buffer = []
     with open(output_file, mode) as f, tqdm(total=len(data)) as pbar:
         k = num_exist_lines
         pbar.update(k)
@@ -94,7 +99,7 @@ def generate(
                 return
             
             batch_samples = data[k: e]
-            # print(batch_samples)
+            
             batch_outputs = generator.generate(batch_input, batch_size=batch_size, max_input_tokens=max_input_tokens, max_new_tokens=max_new_tokens, canonicalize_smiles=False, print_out=False, **generation_kargs)
 
             assert len(batch_input) == len(batch_outputs)
@@ -115,7 +120,11 @@ def generate(
                     'input_text': sample_outputs['input_text'],
                     'real_input_text': sample_outputs['real_input_text'],
                 }
+                # buffer.append(json.dumps(log, ensure_ascii=False))
 
+                # if len(buffer) >= buffer_size:
+                #     f.write('\n'.join(buffer) + '\n')
+                #     buffer.clear()
                 f.write(json.dumps(log, ensure_ascii=False) + '\n')
 
             pbar.update(e - k)
@@ -128,12 +137,12 @@ def main(
     base_model: str = None,
     # Data
     data_path: str = "osunlp/SMolInstruct",
-    split: str = 'test',
+    split: str = 'train',
     tasks = None,
     # Output
     output_dir: str = 'eval',
     # Running configs
-    batch_size: int = 1,
+    batch_size: int = 8,
     max_input_tokens: int = None,
     max_new_tokens: int = None,
     print_out=False,

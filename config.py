@@ -23,14 +23,14 @@ DEFAULT_MAX_NEW_TOKENS = 1024
 TASKS_GENERATION_SETTINGS = {
     'forward_synthesis': {
         'generation_kargs': {
-            'num_return_sequences': 5,
+            'num_return_sequences': 1,
             'num_beams': 8
         },
     },
     'retrosynthesis': {
         'max_new_tokens': 960,
         'generation_kargs': {
-            'num_return_sequences': 10,
+            'num_return_sequences': 1,
             'num_beams': 13
         },
     },
